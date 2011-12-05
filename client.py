@@ -100,9 +100,16 @@ class SyncSample(object):
         return base64.b32decode(denormalize(p))
 
 if __name__ == '__main__':
-    username = "user@bla"
-    password = "secret"
-    passphrase = "a-abcde-12345-abcde-12345-abcde"
+    configfile = "~/.firefoxsyncrc"
+    from ConfigParser import SafeConfigParser
+    from os import path
+    configfile = path.expanduser(configfile)
+    parser = SafeConfigParser()
+    parser.read(configfile)
+    username = parser.get('server_settings', 'username')
+    password = parser.get('server_settings', 'password')
+    passphrase = parser.get('server_settings', 'passphrase')
+
 
     try:
         from credentials import *

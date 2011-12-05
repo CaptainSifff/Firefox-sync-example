@@ -3,3 +3,5 @@ A simple python Firefox Sync (Weave) client.
 See http://vanderwijk.info/2011/8/14/accessing-firefox-sync-data-from-python
 for a blog post explaining some background.
 
+moved login details and encryption key to config file, by default this is
+~/.firefoxsyncrc , see the sample.config file for the format.
