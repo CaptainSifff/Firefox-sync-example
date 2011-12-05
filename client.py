@@ -64,8 +64,8 @@ class SyncSample(object):
 
         return self.cipher_decrypt(ciphertext, self.privkey, IV)
 
-    def bookmarks(self):
-        d = self.get("storage/bookmarks")
+    def history(self):
+        d = self.get("storage/history")
         return d 
 
     def passwords(self):
@@ -77,8 +77,8 @@ class SyncSample(object):
         return res
 
     def bookmark(self, id):
-        # url = "storage/bookmarks?ids=%s" % urllib.quote(','.join(ids))
-        d = self.get("storage/bookmarks/%s" % id)
+        # url = "storage/history?ids=%s" % urllib.quote(','.join(ids))
+        d = self.get("storage/history/%s" % id)
         payload = json.loads(d['payload'])
         return self.decrypt(payload)
 
@@ -122,8 +122,8 @@ if __name__ == '__main__':
 
     import pprint
     pprint.pprint(meta)
-    # ids = s.bookmarks()
-    # for id in ids[:3]:
-    #     pprint.pprint(s.bookmark(id))
-    passwords = s.passwords()
-    pprint.pprint(passwords)
+    ids = s.history()
+    for id in ids:
+        pprint.pprint(s.bookmark(id))
+    #passwords = s.passwords()
+    #pprint.pprint(passwords)
