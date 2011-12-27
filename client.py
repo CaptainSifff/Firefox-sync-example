@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ## Demonstrates certain parts of accessing (and decoding/decrypting)
 ## data stored by Firefox Sync ("Weave") from Python
 ##
