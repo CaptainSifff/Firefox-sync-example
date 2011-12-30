@@ -29,7 +29,7 @@ class SyncSample(object):
         url = self.server + '/user/1.0/' + self.username + '/node/weave'
         r = requests.get(url, auth=(self.username, self._password))
         return r.content
-        
+
     def get(self, path):
         url = '/'.join((self.node, self.api, self.username, path))
         r = requests.get(url, auth=(self.username, self._password))
@@ -53,7 +53,6 @@ class SyncSample(object):
         ciphertext = payload['ciphertext'].decode("base64")
         IV = payload['IV'].decode("base64")
         hmac = payload['hmac'].decode("base64")
-        
         default = self.cipher_decrypt(ciphertext, self.encryption_key, IV)['default']
         self.privkey = default[0].decode("base64")
         self.privhmac = default[1].decode("base64")
@@ -65,9 +64,12 @@ class SyncSample(object):
 
         return self.cipher_decrypt(ciphertext, self.privkey, IV)
 
-    def history(self):
-        d = self.get("storage/history")
-        return d 
+    def history(self, time = None):
+        if time == None:
+            d = self.get("storage/history")
+        else:
+            d = self.get("storage/history?newer=%s" % time)
+        return d
 
     def passwords(self):
         d = self.get("storage/passwords?full=1")
@@ -104,6 +106,7 @@ if __name__ == '__main__':
     configfile = "~/.firefoxsyncrc"
     from ConfigParser import SafeConfigParser
     from os import path
+    import argparse
     configfile = path.expanduser(configfile)
     parser = SafeConfigParser()
     parser.read(configfile)
@@ -117,14 +120,22 @@ if __name__ == '__main__':
     except ImportError:
         pass
 
+    parser = argparse.ArgumentParser(
+            description = "prints urls stored in FirefoxSync (Weave)")
+    parser.add_argument("-t","--time", action="store", dest="time",
+                        help="print all URLs since this (POSIX) time (as POSIX)")
+    args = parser.parse_args()
+    time = args.time
     s = SyncSample(username, password, passphrase)
     meta = s.get_meta()
     assert meta['storageVersion'] == 5
 
     import pprint
-    pprint.pprint(meta)
-    ids = s.history()
+    #pprint.pprint(meta)
+    ids = s.history(time)
     for id in ids:
+        print ""
         pprint.pprint(s.bookmark(id))
+        print s.bookmark(id)[u'histUri']
     #passwords = s.passwords()
     #pprint.pprint(passwords)
