@@ -85,7 +85,10 @@ class SyncSample(object):
 
     @staticmethod
     def encode_username(u):
-        return base64.b32encode(hashlib.sha1(u).digest()).lower()
+	if '@' in u:
+	        return base64.b32encode(hashlib.sha1(u).digest()).lower()
+	else:
+		return u
 
     @staticmethod
     def hmac_sha256(key, s):
