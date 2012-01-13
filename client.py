@@ -134,8 +134,8 @@ if __name__ == '__main__':
     #pprint.pprint(meta)
     ids = s.history(time)
     for id in ids:
-        print ""
-        pprint.pprint(s.bookmark(id))
+        #pprint.pprint(s.bookmark(id))
         print s.bookmark(id)[u'histUri']
+        print s.bookmark(id)[u'visits'][0][u'date']
     #passwords = s.passwords()
     #pprint.pprint(passwords)
