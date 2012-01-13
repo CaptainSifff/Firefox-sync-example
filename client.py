@@ -28,7 +28,7 @@ class SyncSample(object):
     def get_node(self):
         url = self.server + '/user/1.0/' + self.username + '/node/weave'
         r = requests.get(url, auth=(self.username, self._password))
-        print "Url:", url, "Node:", r.content, "[S:", r.status_code, "]"
+        #print "Url:", url, "Node:", r.content, "[S:", r.status_code, "]"
         return r.content
 
     def get(self, path):
