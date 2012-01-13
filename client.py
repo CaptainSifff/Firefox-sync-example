@@ -28,6 +28,7 @@ class SyncSample(object):
     def get_node(self):
         url = self.server + '/user/1.0/' + self.username + '/node/weave'
         r = requests.get(url, auth=(self.username, self._password))
+        print "Url:", url, "Node:", r.content, "[S:", r.status_code, "]"
         return r.content
 
     def get(self, path):
@@ -87,7 +88,10 @@ class SyncSample(object):
 
     @staticmethod
     def encode_username(u):
-        return base64.b32encode(hashlib.sha1(u).digest()).lower()
+	if '@' in u:
+	        return base64.b32encode(hashlib.sha1(u).digest()).lower()
+	else:
+		return u
 
     @staticmethod
     def hmac_sha256(key, s):
