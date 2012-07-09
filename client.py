@@ -141,12 +141,19 @@ if __name__ == '__main__':
             description="prints urls stored in FirefoxSync (Weave)")
     parser.add_argument("-t", "--time", action="store", dest="time",
                 help="print all URLs since this (POSIX) time (as POSIX)")
+    parser.add_argument('-d', action='store_true', dest='daemon_mode',
+            default=False, help='keep running and check for new history items \
+            every ten minutes')
+    parser.add_argument('-n', action='store_true', dest='now',
+            default=False, help='print history from now (only makes sense \
+                    with -d')
     args = parser.parse_args()
     since_time = args.time
+    if args.now:
+        since_time = time.time()
 
-    daemon_mode = True
     sleeptime = 600
-    if daemon_mode:
+    if args.daemon_mode:
         while 1:
             last_time = time.time()
 

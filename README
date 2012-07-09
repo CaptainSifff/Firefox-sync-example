@@ -1,7 +1,17 @@
 A simple python Firefox Sync (Weave) client.
 
-See http://vanderwijk.info/2011/8/14/accessing-firefox-sync-data-from-python
-for a blog post explaining some background.
+Forked from https://github.com/iivvoo/Firefox-sync-example
 
-moved login details and encryption key to config file, by default this is
-~/.firefoxsyncrc , see the sample.config file for the format.
+This version prints the browsing history to stdout.
+
+ -t TIME 	print only history since TIME (in unix time), default is to print
+		all browsing history
+ -d 		keep running and check for new history items every ten minutes
+ --help 	for all options
+
+before you use this against Mozilla's own sync server, you should probably check if their
+Terms of Services allow this kind of behaviour ( https://services.mozilla.com/tos/ )
+
+Login credentials and encryption key can be either saved in a config file (
+~/.firefoxsyncrc , see the sample.config file for the format) or the sync
+client will ask for them.
