@@ -5,14 +5,13 @@
 ##
 ## (c) 2011 Ivo van der Wijk, m3r consultancy, Christian Geier
 ## See LICENSE for licensing details
+from __future__ import print_function
 import requests  # easy_install this
 import json
 import base64
 import hashlib
 import hmac
 from M2Crypto.EVP import Cipher
-import time
-import pprint
 
 
 class SyncSample(object):
@@ -111,11 +110,12 @@ class SyncSample(object):
 
 if __name__ == '__main__':
     configfile = "~/.firefoxsyncrc"
-    from ConfigParser import SafeConfigParser
     import ConfigParser
-    from os import path
     import argparse
     import getpass
+    import time
+    from os import path
+    from ConfigParser import SafeConfigParser
 
     configfile = path.expanduser(configfile)
     parser = SafeConfigParser()
@@ -143,10 +143,28 @@ if __name__ == '__main__':
                 help="print all URLs since this (POSIX) time (as POSIX)")
     args = parser.parse_args()
     since_time = args.time
+
+    daemon_mode = True
+    sleeptime = 600
+    if daemon_mode:
+        while 1:
+            last_time = time.time()
+
+            syncer = SyncSample(username, password, passphrase, server=server)
+            meta = syncer.get_meta()
+            assert meta['storageVersion'] == 5
+
+            ids = syncer.history(since_time)
+            for one_id in ids:
+                print(syncer.hist_item(one_id)[u'histUri'])
+            del syncer
+            time.sleep(sleeptime)
+            since_time = last_time
+
+
     syncer = SyncSample(username, password, passphrase, server=server)
     meta = syncer.get_meta()
     assert meta['storageVersion'] == 5
-
     ids = syncer.history(since_time)
     for one_id in ids:
-        print syncer.hist_item(one_id)[u'histUri']
+        print(syncer.hist_item(one_id)[u'histUri'])
