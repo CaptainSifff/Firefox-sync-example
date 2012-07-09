@@ -115,15 +115,26 @@ if __name__ == '__main__':
     import ConfigParser
     from os import path
     import argparse
+    import getpass
+
     configfile = path.expanduser(configfile)
     parser = SafeConfigParser()
     parser.read(configfile)
-    username = parser.get('server_settings', 'username')
-    password = parser.get('server_settings', 'password')
-    passphrase = parser.get('server_settings', 'passphrase')
+    try:
+        username = parser.get('server_settings', 'username')
+    except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+        username = raw_input('Username: ')
+    try:
+        password = parser.get('server_settings', 'password')
+    except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+        password = getpass.getpass('Password (for the server): ')
+    try:
+        passphrase = parser.get('server_settings', 'passphrase')
+    except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+        passphrase = getpass.getpass('Passphrase (for decryption): ')
     try:
         server = parser.get('server_settings', 'server')
-    except  ConfigParser.NoOptionError:
+    except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
         server = "https://auth.services.mozilla.com"
 
     parser = argparse.ArgumentParser(
