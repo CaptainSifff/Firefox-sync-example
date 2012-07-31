@@ -3,10 +3,13 @@ A simple python Firefox Sync (Weave) client.
 Forked from https://github.com/iivvoo/Firefox-sync-example
 
 This version prints the browsing history to stdout.
+It can also remove computers with synced-tabs from the sync-server.
 
  -t TIME 	print only history since TIME (in unix time), default is to print
 		all browsing history
  -d 		keep running and check for new history items every ten minutes
+  --delete-tabs         presents user with list of computers with synced tabs,
+                        ask user which to delete and deletes it
  --help 	for all options
 
 before you use this against Mozilla's own sync server, you should probably check if their

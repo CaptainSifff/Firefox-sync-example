@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+"""
 ## Demonstrates certain parts of accessing (and decoding/decrypting)
 ## data stored by Firefox Sync ("Weave") from Python
 ##
 ##
-## (c) 2011 Ivo van der Wijk, m3r consultancy, Christian Geier
+## (c) 2011-2012 Ivo van der Wijk, m3r consultancy, Christian Geier
 ## See LICENSE for licensing details
+"""
 from __future__ import print_function
 import requests  # easy_install this
 import json
@@ -15,6 +17,7 @@ from M2Crypto.EVP import Cipher
 
 
 class SyncSample(object):
+    """used for syncing with mozilla's sync service"""
     api = "1.1"
     HMAC_INPUT = "Sync-AES_256_CBC-HMAC256"
 
@@ -30,14 +33,19 @@ class SyncSample(object):
 
     def get_node(self):
         url = self.server + '/user/1.0/' + self.username + '/node/weave'
-        r = requests.get(url, auth=(self.username, self._password))
+        req = requests.get(url, auth=(self.username, self._password))
         #print "Url:", url, "Node:", r.content, "[S:", r.status_code, "]"
-        return r.content
+        return req.content
 
     def get(self, path):
         url = '/'.join((self.node, self.api, self.username, path))
-        r = requests.get(url, auth=(self.username, self._password))
-        return json.loads(r.content)
+        req = requests.get(url, auth=(self.username, self._password))
+        return json.loads(req.content)
+
+    def _delete(self, path):
+        url = '/'.join((self.node, self.api, self.username, path))
+        req = requests.delete(url, auth=(self.username, self._password))
+        return json.loads(req.content)
 
     def get_meta(self):
         data = self.get('storage/meta/global')
@@ -56,7 +64,7 @@ class SyncSample(object):
         payload = json.loads(data['payload'])
         ciphertext = payload['ciphertext'].decode("base64")
         IV = payload['IV'].decode("base64")
-        hmac = payload['hmac'].decode("base64")
+        #hmac = payload['hmac'].decode("base64")
         default = self.cipher_decrypt(ciphertext, self.encryption_key, IV)['default']
         self.privkey = default[0].decode("base64")
         self.privhmac = default[1].decode("base64")
@@ -64,8 +72,7 @@ class SyncSample(object):
     def decrypt(self, data):
         ciphertext = data['ciphertext'].decode("base64")
         IV = data['IV'].decode("base64")
-        hmac = data['hmac'].decode("base64")
-
+        #hmac = data['hmac'].decode("base64")
         return self.cipher_decrypt(ciphertext, self.privkey, IV)
 
     def history(self, time=None):
@@ -76,44 +83,58 @@ class SyncSample(object):
         return d
 
     def passwords(self):
-        d = self.get("storage/passwords?full=1")
+        data = self.get("storage/passwords?full=1")
         res = []
-        for p in d:
-            payload = json.loads(p['payload'])
+        for line in data:
+            payload = json.loads(line['payload'])
             res.append(self.decrypt(payload))
         return res
 
-    def hist_item(self, id):
-        d = self.get("storage/history/%s" % id)
-        payload = json.loads(d['payload'])
+    def hist_item(self, hist_id):
+        data = self.get("storage/history/%s" % hist_id)
+        payload = json.loads(data['payload'])
         return self.decrypt(payload)
 
+    def delete_tabs(self):
+        """delete saved tabs"""
+        tabs = self.get('storage/tabs?full=1')
+        tablist = list()
+        for one in tabs:
+            tablist.append(self.decrypt(json.loads(one['payload'])))
+        for ind, one in enumerate(tablist):
+            print(ind, ')', one['clientName'], '(', one['id'], ')')
+        tdelete = int(raw_input('Which tab do You want to delete? '))
+        print('deleting "', tablist[tdelete]['clientName'], '"')
+        self._delete('storage/tabs/' + tablist[tdelete]['id'])
+
     @staticmethod
-    def encode_username(u):
-        if '@' in u:
-            return base64.b32encode(hashlib.sha1(u).digest()).lower()
+    def encode_username(uname):
+        if '@' in uname:
+            return base64.b32encode(hashlib.sha1(uname).digest()).lower()
         else:
-            return u
+            return uname
 
     @staticmethod
-    def hmac_sha256(key, s):
-        return hmac.new(key, s, hashlib.sha256).digest()
+    def hmac_sha256(key, string):
+        return hmac.new(key, string, hashlib.sha256).digest()
 
     @staticmethod
-    def decode_passphrase(p):
+    def decode_passphrase(passphrase):
         def denormalize(k):
             """ transform x-xxxxx-xxxxx etc into something b32-decodable """
             tmp = k.replace('-', '').replace('8', 'l').replace('9', 'o').upper()
             padding = (8 - len(tmp) % 8) % 8
             return tmp + '=' * padding
-        return base64.b32decode(denormalize(p))
+        return base64.b32decode(denormalize(passphrase))
 
-if __name__ == '__main__':
+
+def main():
     configfile = "~/.firefoxsyncrc"
     import ConfigParser
     import argparse
     import getpass
     import time
+    import sys
     from os import path
     from ConfigParser import SafeConfigParser
 
@@ -147,31 +168,37 @@ if __name__ == '__main__':
     parser.add_argument('-n', action='store_true', dest='now',
             default=False, help='print history from now (only makes sense \
                     with -d')
+    parser.add_argument('--delete-tabs', action='store_true', dest='dtabs',
+            default=False, help='presents user with list of computers with \
+                    synced tabs, ask user which to delete and deletes it')
     args = parser.parse_args()
+
+    syncer = SyncSample(username, password, passphrase, server=server)
+    meta = syncer.get_meta()
+    assert meta['storageVersion'] == 5
+
     since_time = args.time
     if args.now:
         since_time = time.time()
 
     sleeptime = 600
-    if args.daemon_mode:
+    if args.dtabs:
+        syncer.delete_tabs()
+        sys.exit()
+    elif args.daemon_mode:
         while 1:
             last_time = time.time()
-
-            syncer = SyncSample(username, password, passphrase, server=server)
-            meta = syncer.get_meta()
-            assert meta['storageVersion'] == 5
-
             ids = syncer.history(since_time)
             for one_id in ids:
                 print(syncer.hist_item(one_id)[u'histUri'])
             del syncer
             time.sleep(sleeptime)
             since_time = last_time
+    else:
+        ids = syncer.history(since_time)
+        for one_id in ids:
+            print(syncer.hist_item(one_id)[u'histUri'])
 
 
-    syncer = SyncSample(username, password, passphrase, server=server)
-    meta = syncer.get_meta()
-    assert meta['storageVersion'] == 5
-    ids = syncer.history(since_time)
-    for one_id in ids:
-        print(syncer.hist_item(one_id)[u'histUri'])
+if __name__ == '__main__':
+    main()
