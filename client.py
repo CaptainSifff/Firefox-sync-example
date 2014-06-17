@@ -110,7 +110,7 @@ class SyncSample(object):
     @staticmethod
     def encode_username(uname):
         if '@' in uname:
-            return base64.b32encode(hashlib.sha1(uname).digest()).lower()
+            return base64.b32encode(hashlib.sha1(uname.lower()).digest()).lower()
         else:
             return uname
 
